@@ -60,5 +60,9 @@ assert.deepEqual(coll, range(0, 6));
 a.sync([500, 990], extraArg = "foo");
 assert.deepEqual(coll, range(3, 12));
 
+assert.equal(a.chunkIndexForX(111), 1);
+
+assert.equal(a.getChunkForX(111), undefined);
+assert.equal(a.getChunkForX(511), "foo=5");
 
 console.log(coll);

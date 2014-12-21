@@ -26,6 +26,12 @@ function SlidingWindow (alloc, free, chunkSize, nbAhead, nbBehind, initialPositi
 }
 
 SlidingWindow.prototype = {
+  chunkIndexForX: function (x) {
+    return ~~(x / this.chunkSize);
+  },
+  getChunkForX: function (x) {
+    return this.chunks[this.chunkIndexForX(x)];
+  },
   /**
    * Sync the window for a given value or a [xhead, xtail] range.
    *
@@ -50,10 +56,10 @@ SlidingWindow.prototype = {
     }
 
     if (this.currentAlloc === null) {
-      this.currentFree = this.currentAlloc = ~~(xtail/this.chunkSize);
+      this.currentFree = this.currentAlloc = this.chunkIndexForX(xtail);
     }
 
-    var headChunk = ~~(xhead / this.chunkSize + 1);
+    var headChunk = this.chunkIndexForX(xhead) + 1;
     var aheadChunk = headChunk + this.nbAhead;
     while (aheadChunk > this.currentAlloc) {
       var i = this.currentAlloc;
@@ -61,7 +67,7 @@ SlidingWindow.prototype = {
       this.currentAlloc ++;
     }
 
-    var tailChunk = ~~(xtail / this.chunkSize);
+    var tailChunk = this.chunkIndexForX(xtail);
     var behindChunk = tailChunk - this.nbBehind;
     while (this.currentFree < behindChunk) {
       var i = this.currentFree;
