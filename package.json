@@ -1,6 +1,6 @@
 {
   "name": "sliding-window",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A simple sliding window chunk alloc/free system",
   "main": "index.js",
   "scripts": {
