@@ -1,0 +1,27 @@
+{
+  "name": "sliding-window",
+  "version": "0.0.1",
+  "description": "A simple sliding window chunk alloc/free system",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:gre/sliding-window.git"
+  },
+  "keywords": [
+    "sliding-window",
+    "alloc",
+    "chunk"
+  ],
+  "author": "Gaëtan Renaudeau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gre/sliding-window/issues"
+  },
+  "homepage": "https://github.com/gre/sliding-window",
+  "devDependencies": {
+    "assert": "^1.1.2"
+  }
+}
