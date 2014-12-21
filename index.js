@@ -14,6 +14,8 @@ function SlidingWindow (alloc, free, chunkSize, nbAhead, nbBehind, initialPositi
   this.nbAhead = nbAhead || 0;
   this.nbBehind = nbBehind || 0;
 
+  this.chunks = {};
+
   if (isNaN(initialPosition)) {
     this.currentAlloc = null;
     this.currentFree = null;
@@ -54,13 +56,18 @@ SlidingWindow.prototype = {
     var headChunk = ~~(xhead / this.chunkSize + 1);
     var aheadChunk = headChunk + this.nbAhead;
     while (aheadChunk > this.currentAlloc) {
-      this.alloc(this.currentAlloc++, args);
+      var i = this.currentAlloc;
+      this.chunks[i] = this.alloc(i, args);
+      this.currentAlloc ++;
     }
 
     var tailChunk = ~~(xtail / this.chunkSize);
     var behindChunk = tailChunk - this.nbBehind;
     while (this.currentFree < behindChunk) {
-      this.free(this.currentFree++, args);
+      var i = this.currentFree;
+      this.free(i, this.chunks[i], args);
+      delete this.chunks[i];
+      this.currentFree ++;
     }
   }
 };

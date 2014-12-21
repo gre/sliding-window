@@ -24,8 +24,10 @@ var a = new SlidingWindow(
     coll.push(i);
     coll.sort(numberSort);
     assert.equal(extraArg, a);
+    return "foo="+i;
   },
-  function (i, a) {
+  function (i, value, a) {
+    assert.equal("foo="+i, value);
     console.log("free", i);
     var c = coll.indexOf(i);
     if (c !== -1) coll.splice(c, 1);
