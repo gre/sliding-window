@@ -27,7 +27,7 @@ function SlidingWindow (alloc, free, chunkSize, nbAhead, nbBehind, initialPositi
 
 SlidingWindow.prototype = {
   chunkIndexForX: function (x) {
-    return ~~(x / this.chunkSize);
+    return Math.floor(x / this.chunkSize);
   },
   getChunkForX: function (x) {
     return this.chunks[this.chunkIndexForX(x)];
