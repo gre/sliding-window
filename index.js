@@ -1,40 +1,50 @@
 
 // TODO
-// - move to options 3rd param
-//    - Add "bounds". format example: [0, +Infinity], [-Infinity, +Infinity], [0, 100]
-// - remove "x" from the vocabulary
-// - rename "sync" to "move"
 // - support for backwards window move
+//    - Add "bounds". format example: [0, +Infinity], [-Infinity, +Infinity], [0, 100]
+//    - Remove initialPosition
 // - "._field" convention
 
 /**
- * chunkSize: the size of each chunk in the sliding window
  * alloc: the alloc function called to alloc a chunk
  * free: the free function called to free a chunk
- * ahead: the number of chunks to keep ahead
- * behind: the numbers of chunks to keep behind
- * initialPosition: the initial chunk position. If not provided, the first call to sync will define it.
+ * options:
+   - chunkSize: the size of each chunk in the sliding window
+   - ahead: the number of chunks to keep ahead
+   - behind: the numbers of chunks to keep behind
+   - bounds: the allowed bounds of the SlidingWindow – format example: [0, +Infinity], [-Infinity, 0], [-Infinity, +Infinity], [0, 100]
  */
-function SlidingWindow (alloc, free, chunkSize, ahead, behind, initialPosition) {
-  if (!(this instanceof SlidingWindow)) return new SlidingWindow(alloc, free, chunkSize, ahead, behind, initialPosition);
-  this.chunkSize = chunkSize;
+function SlidingWindow (alloc, free, options) {
+  if (!(this instanceof SlidingWindow)) return new SlidingWindow(alloc, free, options);
+  if (typeof alloc !== "function") throw new Error("SlidingWindow(alloc, free, options): alloc function is mandatory");
+  if (typeof free !== "function") throw new Error("SlidingWindow(alloc, free, options): free function is mandatory");
+  if (options) {
+    for (var key in options) {
+      this[key] = options[key];
+    }
+  }
   this.alloc = alloc;
   this.free = free;
-  this.ahead = ahead || 0;
-  this.behind = behind || 0;
-
   this.chunks = {};
 
-  if (isNaN(initialPosition)) {
+  // TODO remove
+  if (isNaN(this.initialPosition)) {
     this.currentAlloc = null;
     this.currentFree = null;
   }
   else {
-    this.currentAlloc = this.currentFree = initialPosition;
+    this.currentAlloc = this.currentFree = this.initialPosition;
   }
 }
 
 SlidingWindow.prototype = {
+
+  // DEFAULTS
+  chunkSize: 1,
+  ahead: 0,
+  behind: 0,
+  bounds: [-Infinity, +Infinity],
+  ///////////
 
   /**
    * Compute the starting x position of a given chunk index
@@ -44,17 +54,17 @@ SlidingWindow.prototype = {
   },
 
   /**
-   * Get the chunk index of a given x position
+   * Get the chunk index of a given position
    */
-  chunkIndexForX: function (x) {
-    return Math.floor(x / this.chunkSize);
+  chunkIndex: function (pos) {
+    return Math.floor(pos / this.chunkSize);
   },
 
   /**
-   * Get the chunk data (value returned from the alloc function) for a given x position
+   * Get the chunk data (value returned from the alloc function) for a given position
    */
-  getChunkForX: function (x) {
-    return this.chunks[this.chunkIndexForX(x)];
+  getChunk: function (pos) {
+    return this.chunks[this.chunkIndex(pos)];
   },
 
   /**
@@ -65,36 +75,35 @@ SlidingWindow.prototype = {
   },
 
   /**
-   * Sync the window for a given value or a [xhead, xtail] range.
+   * Sync the window for a given value or a [head, tail] position range.
    *
    * This must be called everytime you want to check/update the SlidingWindow
    * args get pass-in as secondary arguments to free and alloc functions.
    */
-  sync: function (x, args) {
-    var xtail, xhead;
-    if (x instanceof Array) {
-      xtail = x[0];
-      xhead = x[1];
-      if (isNaN(xtail)) throw new Error("xtail is not a number: "+[xtail,xhead]);
-      if (isNaN(xhead)) throw new Error("xhead is not a number: "+[xtail,xhead]);
-      if (xtail > xhead) throw new Error("xtail shouldn't be greater than xhead");
+  move: function (pos, args) {
+    var tail, head;
+    if (pos instanceof Array) {
+      tail = pos[0];
+      head = pos[1];
+      if (isNaN(tail)) throw new Error("tail is not a number: "+[tail,head]);
+      if (isNaN(head)) throw new Error("head is not a number: "+[tail,head]);
+      if (tail > head) throw new Error("tail shouldn't be greater than head");
     }
-    else if (!isNaN(x)) {
-      xtail = x;
-      xhead = x;
+    else if (!isNaN(pos)) {
+      tail = head = pos;
     }
     else {
       throw new Error("x is required and must be an array");
     }
 
     if (this.currentAlloc === null) {
-      this.currentFree = this.currentAlloc = this.chunkIndexForX(xtail);
+      this.currentFree = this.currentAlloc = this.chunkIndex(tail);
     }
 
     var i;
 
-    var headChunk = this.chunkIndexForX(xhead + this.ahead * this.chunkSize) + 1; // is "+ 1" right?
-    var tailChunk = this.chunkIndexForX(xtail - this.behind * this.chunkSize);
+    var headChunk = this.chunkIndex(head + this.ahead * this.chunkSize) + 1; // is "+ 1" right?
+    var tailChunk = this.chunkIndex(tail - this.behind * this.chunkSize);
 
     // Alloc to the right
     for (i = this.currentAlloc; i < headChunk; i++) {

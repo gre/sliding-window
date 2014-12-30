@@ -8,7 +8,7 @@ var extraArg;
 
 function numberSort (a, b) {
   return a > b ? 1 : -1;
-};
+}
 
 function range (from, to) {
   var t = [];
@@ -33,35 +33,38 @@ var a = SlidingWindow(
     if (c !== -1) coll.splice(c, 1);
     coll.sort(numberSort);
     assert.equal(extraArg, a);
-  },
-  100,
-  3,
-  2,
-  0
+  }, {
+    chunkSize: 100,
+    ahead: 3,
+    behind: 2,
+    initialPosition: 0
+  }
 );
 
 assert.equal(coll.length, 0);
 
-a.sync(0);
+a.move(0);
 assert.deepEqual(coll, range(0, 3));
 
-a.sync(150);
+a.move(150);
 assert.deepEqual(coll, range(0, 4));
 
 /*
-a.sync(350, extraArg = 42);
+a.move(350, extraArg = 42);
 assert.deepEqual(coll, range(1, 6));
 */
 
-a.sync([0, 350]);
+a.move([0, 350]);
 assert.deepEqual(coll, range(0, 6));
 
-a.sync([500, 990], extraArg = "foo");
+a.move([500, 990], extraArg = "foo");
 assert.deepEqual(coll, range(3, 12));
 
-assert.equal(a.chunkIndexForX(111), 1);
+assert.equal(a.chunkIndex(111), 1);
 
-assert.equal(a.getChunkForX(111), undefined);
-assert.equal(a.getChunkForX(511), "foo=5");
+assert.equal(a.getChunk(111), undefined);
+assert.equal(a.getChunk(511), "foo=5");
+assert.equal(a.getChunkByIndex(5), "foo=5");
+assert.equal(a.reverseIndex(5), 500);
 
 console.log(coll);
