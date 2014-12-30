@@ -18,7 +18,7 @@ function range (from, to) {
   return t;
 }
 
-var a = new SlidingWindow(
+var a = SlidingWindow(
   function (i, a) {
     console.log("alloc", i);
     coll.push(i);

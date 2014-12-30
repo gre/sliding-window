@@ -8,6 +8,7 @@
  * initialPosition: the initial chunk position. If not provided, the first call to sync will define it.
  */
 function SlidingWindow (alloc, free, chunkSize, ahead, behind, initialPosition) {
+  if (!(this instanceof SlidingWindow)) return new SlidingWindow(alloc, free, chunkSize, ahead, behind, initialPosition);
   this.chunkSize = chunkSize;
   this.alloc = alloc;
   this.free = free;
