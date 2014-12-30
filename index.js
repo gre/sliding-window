@@ -3,16 +3,16 @@
  * chunkSize: the size of each chunk in the sliding window
  * alloc: the alloc function called to alloc a chunk
  * free: the free function called to free a chunk
- * nbAhead: the number of chunks to keep ahead
- * nbBehind: the numbers of chunks to keep behind
+ * ahead: the number of chunks to keep ahead
+ * behind: the numbers of chunks to keep behind
  * initialPosition: the initial chunk position. If not provided, the first call to sync will define it.
  */
-function SlidingWindow (alloc, free, chunkSize, nbAhead, nbBehind, initialPosition) {
+function SlidingWindow (alloc, free, chunkSize, ahead, behind, initialPosition) {
   this.chunkSize = chunkSize;
   this.alloc = alloc;
   this.free = free;
-  this.nbAhead = nbAhead || 0;
-  this.nbBehind = nbBehind || 0;
+  this.ahead = ahead || 0;
+  this.behind = behind || 0;
 
   this.chunks = {};
 
@@ -59,18 +59,18 @@ SlidingWindow.prototype = {
       this.currentFree = this.currentAlloc = this.chunkIndexForX(xtail);
     }
 
-    var headChunk = this.chunkIndexForX(xhead) + 1;
-    var aheadChunk = headChunk + this.nbAhead;
-    while (aheadChunk > this.currentAlloc) {
-      var i = this.currentAlloc;
+    var i;
+
+    var headChunk = this.chunkIndexForX(xhead + this.ahead * this.chunkSize);
+    while (headChunk >= this.currentAlloc) {
+      i = this.currentAlloc;
       this.chunks[i] = this.alloc(i, args);
       this.currentAlloc ++;
     }
 
-    var tailChunk = this.chunkIndexForX(xtail);
-    var behindChunk = tailChunk - this.nbBehind;
-    while (this.currentFree < behindChunk) {
-      var i = this.currentFree;
+    var tailChunk = this.chunkIndexForX(xtail - this.behind * this.chunkSize);
+    while (this.currentFree < tailChunk) {
+      i = this.currentFree;
       this.free(i, this.chunks[i], args);
       delete this.chunks[i];
       this.currentFree ++;
