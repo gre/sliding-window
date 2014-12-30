@@ -1,4 +1,12 @@
 
+// TODO
+// - move to options 3rd param
+//    - Add "bounds". format example: [0, +Infinity], [-Infinity, +Infinity], [0, 100]
+// - remove "x" from the vocabulary
+// - rename "sync" to "move"
+// - support for backwards window move
+// - "._field" convention
+
 /**
  * chunkSize: the size of each chunk in the sliding window
  * alloc: the alloc function called to alloc a chunk
@@ -85,20 +93,49 @@ SlidingWindow.prototype = {
 
     var i;
 
-    var headChunk = this.chunkIndexForX(xhead + this.ahead * this.chunkSize);
-    while (headChunk >= this.currentAlloc) {
-      i = this.currentAlloc;
-      this.chunks[i] = this.alloc(i, args);
-      this.currentAlloc ++;
-    }
-
+    var headChunk = this.chunkIndexForX(xhead + this.ahead * this.chunkSize) + 1; // is "+ 1" right?
     var tailChunk = this.chunkIndexForX(xtail - this.behind * this.chunkSize);
-    while (this.currentFree < tailChunk) {
-      i = this.currentFree;
+
+    // Alloc to the right
+    for (i = this.currentAlloc; i < headChunk; i++) {
+      this.chunks[i] = this.alloc(i, args);
+    }
+    this.currentAlloc = i;
+
+    // Free to the right
+    for (i = this.currentFree; i < tailChunk; i++) {
       this.free(i, this.chunks[i], args);
       delete this.chunks[i];
-      this.currentFree ++;
     }
+    this.currentFree = i;
+
+    // TODO WIP not working as expected
+    /*
+    // Alloc to the left
+    for (i = this.currentFree; i > tailChunk; i--) {
+      this.chunks[i] = this.alloc(i, args);
+    }
+    this.currentFree = i;
+
+
+    // Free to the left
+    for (i = this.currentAlloc; i > headChunk; i--) {
+      this.free(i, this.chunks[i], args);
+      delete this.chunks[i];
+    }
+    this.currentAlloc = i;
+    */
+
+    /*
+    // That check should be guaranteed when a proper implementation finished
+    if (headChunk !== this.currentAlloc || tailChunk !== this.currentFree) {
+      console.log("headChunk=", headChunk);
+      console.log("currentAlloc=", this.currentAlloc);
+      console.log("tailChunk=", tailChunk);
+      console.log("currentFree=", this.currentFree);
+      throw new Error("SlidingWindow: Error in the algorithm. The window couldn't be synchronized properly");
+    }
+    */
   }
 };
 
