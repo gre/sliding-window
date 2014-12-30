@@ -27,15 +27,35 @@ function SlidingWindow (alloc, free, chunkSize, ahead, behind, initialPosition) 
 }
 
 SlidingWindow.prototype = {
+
+  /**
+   * Compute the starting x position of a given chunk index
+   */
   reverseIndex: function (index) {
     return index * this.chunkSize;
   },
+
+  /**
+   * Get the chunk index of a given x position
+   */
   chunkIndexForX: function (x) {
     return Math.floor(x / this.chunkSize);
   },
+
+  /**
+   * Get the chunk data (value returned from the alloc function) for a given x position
+   */
   getChunkForX: function (x) {
     return this.chunks[this.chunkIndexForX(x)];
   },
+
+  /**
+   * Get the chunk data (value returned from the alloc function) for a given chunk index
+   */
+  getChunkByIndex: function (i) {
+    return this.chunks[i];
+  },
+
   /**
    * Sync the window for a given value or a [xhead, xtail] range.
    *
