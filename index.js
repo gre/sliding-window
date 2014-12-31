@@ -1,17 +1,11 @@
 
-// TODO
-// - support for backwards window move
-//    - Add "bounds". format example: [0, +Infinity], [-Infinity, +Infinity], [0, 100]
-//    - Remove initialPosition
-// - "._field" convention
-
 /**
  * alloc: the alloc function called to alloc a chunk
  * free: the free function called to free a chunk
  * options:
    - chunkSize: the size of each chunk in the sliding window
-   - ahead: the number of chunks to keep ahead
-   - behind: the numbers of chunks to keep behind
+   - right: the number of chunks to keep ahead to the right of the window (meaning in higher position values)
+   - left: the numbers of chunks to keep ahead to the left of the window (meaning in lower position values)
    - bounds: the allowed bounds of the SlidingWindow – format example: [0, +Infinity], [-Infinity, 0], [-Infinity, +Infinity], [0, 100]
  */
 function SlidingWindow (alloc, free, options) {
@@ -25,24 +19,17 @@ function SlidingWindow (alloc, free, options) {
   }
   this.alloc = alloc;
   this.free = free;
-  this.chunks = {};
-
-  // TODO remove
-  if (isNaN(this.initialPosition)) {
-    this.currentAlloc = null;
-    this.currentFree = null;
-  }
-  else {
-    this.currentAlloc = this.currentFree = this.initialPosition;
-  }
+  this._chunks = {};
+  this._right = null;
+  this._left = null;
 }
 
 SlidingWindow.prototype = {
 
   // DEFAULTS
   chunkSize: 1,
-  ahead: 0,
-  behind: 0,
+  right: 0,
+  left: 0,
   bounds: [-Infinity, +Infinity],
   ///////////
 
@@ -64,14 +51,27 @@ SlidingWindow.prototype = {
    * Get the chunk data (value returned from the alloc function) for a given position
    */
   getChunk: function (pos) {
-    return this.chunks[this.chunkIndex(pos)];
+    return this._chunks[this.chunkIndex(pos)];
   },
 
   /**
    * Get the chunk data (value returned from the alloc function) for a given chunk index
    */
   getChunkByIndex: function (i) {
-    return this.chunks[i];
+    return this._chunks[i];
+  },
+
+  /**
+   * Destroy and free completely the SlidingWindow
+   */
+  destroy: function (args) {
+    for (var i=this._left; i <= this._right; ++i) {
+      this.free(i, this._chunks[i], args);
+      delete this._chunks[i];
+    }
+    this._chunks = null;
+    this.alloc = null;
+    this.free = null;
   },
 
   /**
@@ -82,69 +82,66 @@ SlidingWindow.prototype = {
    */
   move: function (pos, args) {
     var tail, head;
-    if (pos instanceof Array) {
-      tail = pos[0];
-      head = pos[1];
-      if (isNaN(tail)) throw new Error("tail is not a number: "+[tail,head]);
-      if (isNaN(head)) throw new Error("head is not a number: "+[tail,head]);
-      if (tail > head) throw new Error("tail shouldn't be greater than head");
-    }
-    else if (!isNaN(pos)) {
+    if (typeof pos === "number" && !isNaN(pos)) {
       tail = head = pos;
     }
     else {
-      throw new Error("x is required and must be an array");
+      tail = pos[0];
+      head = pos[1];
+      if (typeof tail !== "number" || isNaN(tail) || !isFinite(tail)) throw new Error("tail is not a finite number: "+[tail,head]);
+      if (typeof head !== "number" || isNaN(head) || !isFinite(head)) throw new Error("head is not a finite number: "+[tail,head]);
+      if (tail > head) throw new Error("tail shouldn't be greater than head");
     }
 
-    if (this.currentAlloc === null) {
-      this.currentFree = this.currentAlloc = this.chunkIndex(tail);
+    // leftChunk and rightChunk are the new allocation window target
+    var rightChunk = Math.min(this.chunkIndex(head + this.right * this.chunkSize), this.bounds[1]),
+        leftChunk = Math.max(this.chunkIndex(tail - this.left * this.chunkSize), this.bounds[0]),
+        chunks = this._chunks,
+        allocs = [],
+        frees = [],
+        i, index;
+
+    if (this._right === null) {
+      // If nothing has even been initialized, we better start where the tail is (rather that arbitrary position)
+      this._left = leftChunk;
+      this._right = leftChunk - 1;
     }
-
-    var i;
-
-    var headChunk = this.chunkIndex(head + this.ahead * this.chunkSize) + 1; // is "+ 1" right?
-    var tailChunk = this.chunkIndex(tail - this.behind * this.chunkSize);
 
     // Alloc to the right
-    for (i = this.currentAlloc; i < headChunk; i++) {
-      this.chunks[i] = this.alloc(i, args);
-    }
-    this.currentAlloc = i;
+    for (i = this._right+1; i <= rightChunk; i++)
+      allocs.push(i);
+
+    // Alloc to the left
+    for (i=this._left-1; i >= leftChunk; i--)
+      allocs.push(i);
 
     // Free to the right
-    for (i = this.currentFree; i < tailChunk; i++) {
-      this.free(i, this.chunks[i], args);
-      delete this.chunks[i];
-    }
-    this.currentFree = i;
-
-    // TODO WIP not working as expected
-    /*
-    // Alloc to the left
-    for (i = this.currentFree; i > tailChunk; i--) {
-      this.chunks[i] = this.alloc(i, args);
-    }
-    this.currentFree = i;
-
+    for (i = this._left; i < leftChunk; i++)
+      frees.push(i);
 
     // Free to the left
-    for (i = this.currentAlloc; i > headChunk; i--) {
-      this.free(i, this.chunks[i], args);
-      delete this.chunks[i];
-    }
-    this.currentAlloc = i;
-    */
+    for (i = this._right; i > rightChunk; i--)
+      frees.push(i);
 
-    /*
-    // That check should be guaranteed when a proper implementation finished
-    if (headChunk !== this.currentAlloc || tailChunk !== this.currentFree) {
-      console.log("headChunk=", headChunk);
-      console.log("currentAlloc=", this.currentAlloc);
-      console.log("tailChunk=", tailChunk);
-      console.log("currentFree=", this.currentFree);
-      throw new Error("SlidingWindow: Error in the algorithm. The window couldn't be synchronized properly");
+    // move to the new window
+    this._right = rightChunk;
+    this._left = leftChunk;
+    
+    // Free all chunks that are not mutually present with allocs
+    for (i=0; i<frees.length; ++i) {
+      index = frees[i];
+      if (allocs.indexOf(index) === -1) {
+        this.free(index, chunks[index], args);
+        delete chunks[index];
+      }
     }
-    */
+    // Alloc all chunks that are not mutually present with frees
+    for (i=0; i<allocs.length; ++i) {
+      index = allocs[i];
+      if (frees.indexOf(index) === -1) {
+        chunks[index] = this.alloc(index, args);
+      }
+    }
   }
 };
 

@@ -1,7 +1,7 @@
 {
   "name": "sliding-window",
   "version": "0.1.3",
-  "description": "A simple sliding window chunk alloc/free system",
+  "description": "unidimensional chunk allocation/free system.",
   "main": "index.js",
   "scripts": {
     "test": "node test.js"
@@ -12,7 +12,9 @@
   },
   "keywords": [
     "sliding-window",
-    "alloc",
+    "allocation",
+    "memory",
+    "stream",
     "chunk"
   ],
   "author": "Gaëtan Renaudeau",
