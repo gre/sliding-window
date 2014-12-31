@@ -3,7 +3,7 @@ sliding-window [![Build Status](https://travis-ci.org/gre/sliding-window.png)](h
 
 **sliding-window** is an unidimensional chunk allocation / free system.
 
-[![npm install sliding-window](https://nodei.co/npm/sliding-window.png)](http://npmjs.org/package/sliding-window?mini=true)
+[![npm install sliding-window](https://nodei.co/npm/sliding-window.png?mini=true)](http://npmjs.org/package/sliding-window)
 
 
 > `sliding-window` can be used for making your Infinite Scrollers,
