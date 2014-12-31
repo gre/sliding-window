@@ -7,7 +7,7 @@ sliding-window [![Build Status](https://travis-ci.org/gre/sliding-window.png)](h
 
 
 > `sliding-window` can be used for making your Infinite Scrollers,
-game level generation by chunk (e.g thing about Flappy Bird),
+game level generation by chunk (e.g Flappy Bird like),
 allocation of anything in an infinite (or huge) unidimensional world.
 
 Concept
