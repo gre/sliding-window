@@ -13,7 +13,7 @@ allocation of anything in an infinite (or huge) unidimensional world.
 Concept
 -------
 
-![schema svg](https://cloud.githubusercontent.com/assets/211411/5589712/d5bd0bf6-9125-11e4-8cbb-e5b6dcc9128c.png)
+![schema.svg](https://cloud.githubusercontent.com/assets/211411/5589938/d72848ee-9129-11e4-8b1f-f3579ff63d8c.png)
 
 API
 ---
