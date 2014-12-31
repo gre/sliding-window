@@ -69,4 +69,6 @@ Usages
 
 **sliding-window** is used by:
 
-- [bonhomme](https://gitub.com/gre/bonhomme) game: handling game level generation by chunk. Also used on the server side to handle different "rooms" of players to only broadcast events to people that are visible each other.
+- [bonhomme](https://gitub.com/gre/bonhomme) game:
+  - handling game level generation by chunk. [browse the code](https://github.com/gre/bonhomme/blob/963a2390d7cbf3f1b45b74fb5e5e0b4fe50ad15a/client/Map.js#L63-L74)
+  - on the server side, used with socket.io to handle different "rooms" of players to only broadcast events to people that are visible each other. [browse the code](https://github.com/gre/bonhomme/blob/963a2390d7cbf3f1b45b74fb5e5e0b4fe50ad15a/server/index.js#L118-L129)
