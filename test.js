@@ -145,3 +145,5 @@ function free (i, value, a) {
 
   a.destroy(extraArg = "foo");
 }());
+
+console.log("All tests passed.");

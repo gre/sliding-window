@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/gre/sliding-window",
   "devDependencies": {
-    "assert": "^1.1.2"
+    "assert": "^1.1.2",
+    "benchmark": "^1.0.0"
   }
 }
