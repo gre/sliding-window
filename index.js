@@ -1,4 +1,7 @@
 
+/*jshint -W079 */
+var Map = require('es6-map');
+
 /**
  * alloc: the alloc function called to alloc a chunk
  * free: the free function called to free a chunk
@@ -19,7 +22,7 @@ function SlidingWindow (alloc, free, options) {
   }
   this.alloc = alloc;
   this.free = free;
-  this._chunks = {};
+  this._chunks = new Map();
   this._right = null;
   this._left = null;
 }
@@ -51,14 +54,14 @@ SlidingWindow.prototype = {
    * Get the chunk data (value returned from the alloc function) for a given position
    */
   getChunk: function (pos) {
-    return this._chunks[this.chunkIndex(pos)];
+    return this._chunks.get(this.chunkIndex(pos));
   },
 
   /**
    * Get the chunk data (value returned from the alloc function) for a given chunk index
    */
   getChunkByIndex: function (i) {
-    return this._chunks[i];
+    return this._chunks.get(i);
   },
 
   /**
@@ -66,8 +69,8 @@ SlidingWindow.prototype = {
    */
   destroy: function (args) {
     for (var i=this._left; i <= this._right; ++i) {
-      this.free(i, this._chunks[i], args);
-      delete this._chunks[i];
+      this.free(i, this._chunks.get(i), args);
+      this._chunks.delete(i);
     }
     this._chunks = null;
     this.alloc = null;
@@ -131,15 +134,15 @@ SlidingWindow.prototype = {
     for (i=0; i<frees.length; ++i) {
       index = frees[i];
       if (allocs.indexOf(index) === -1) {
-        this.free(index, chunks[index], args);
-        delete chunks[index];
+        this.free(index, chunks.get(index), args);
+        chunks.delete(index);
       }
     }
     // Alloc all chunks that are not mutually present with frees
     for (i=0; i<allocs.length; ++i) {
       index = allocs[i];
       if (frees.indexOf(index) === -1) {
-        chunks[index] = this.alloc(index, args);
+        chunks.set(index, this.alloc(index, args));
       }
     }
   }
